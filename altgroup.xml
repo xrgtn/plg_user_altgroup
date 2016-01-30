@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.1" type="plugin" group="user" method="upgrade">
+	<name>User - Alternative registration group</name>
+	<author>xrgtn</author>
+	<license>Simplified BSD License</license>
+	<version>0.2.1</version>
+	<description>
+		Allows user to select a group during registration
+	</description>
+	<files>
+		<filename plugin="altgroup">altgroup.php</filename>
+	</files>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field name="altgroups" type="text"
+					default="Realtor, Owner"
+					label="User's group"
+					size="16"
+				/>
+			</fieldset>
+		</fields>
+	</config>
+</extension>
