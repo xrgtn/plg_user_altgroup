@@ -15,7 +15,7 @@
 			<fieldset name="basic">
 				<field name="altgroups" type="text"
 					default="Realtor, Owner"
-					label="User's group"
+					label="Permitted alternative groups"
 					size="16"
 				/>
 			</fieldset>
