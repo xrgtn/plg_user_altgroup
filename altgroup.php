@@ -13,10 +13,10 @@ defined('_JEXEC') or die;
  */
 class PlgUserAltgroup extends JPlugin {
     public function onContentPrepareData($context, $data) {
-	// Check we are manipulating a valid form.
+	// We only work with com_users.* and com_admin.profile:
 	if (!in_array($context, array(
-	'com_users.profile', 'com_users.user',
-	'com_users.registration', 'com_admin.profile'))) {
+		'com_admin.profile', 'com_users.user',
+		'com_users.profile', 'com_users.registration'))) {
 	    return true;
 	};
 
@@ -74,61 +74,44 @@ class PlgUserAltgroup extends JPlugin {
 	    $this->_subject->setError('JERROR_NOT_A_FORM');
 	    return false;
 	};
-	// We only work with com_users.* and com_admin.profiled
-	// forms:
+
+	// We only work with com_users.* and com_admin.profile:
 	$form_name = $form->getName();
-	if (!in_array($form_name, array('com_admin.profile',
-	'com_users.user', 'com_users.profile',
-	'com_users.registration'))) {
+	if (!in_array($form_name, array(
+		'com_admin.profile', 'com_users.user',
+		'com_users.profile', 'com_users.registration'))) {
 	    return true;
 	};
 
-	// Add the registration fields to the form.
-	//JForm::addFormPath(__DIR__ . '/profiles');
-	//$form->loadFile('profile', false);
-
-
-	// Change fields description when displayed in front-end or
-	// back-end profile editing
 	$app = JFactory::getApplication();
 
 	if ($app->isSite()
-	&& $form_name == 'com_users.registration') {
-	    JLog::add("fieldsets=".self::_str(
-		$form->getFieldsets()));
-	    JLog::add("form control=".self::_str(
-		$form->getFormControl()));
-	    JLog::add("e2input=".self::_str(
-		$form->getInput("email2")));
-	    JLog::add("e2label=".self::_str(
-		$form->getLabel("email2", "")));
-	    JLog::add("form=".self::_str($form));
+		&& $form_name == 'com_users.registration') {
 	    $form->removeField("email2");
 	    $grpoptions = "";
 	    foreach (explode(",", $this->params->get('altgroups'))
-	    as $grp) {
+		    as $grp) {
 		$grp = htmlentities(trim($grp));
-	        $grpoptions .= "      <option value=\"$grp\">I'm\n"
-		    ."      $grp</option>\n";
+	        $grpoptions .= "        <option value=\"$grp\">"
+		    ."I'm $grp</option>\n";
 	    };
-	    $form->load("<form>\n"
-		."  <fieldset name=\"altgroups\">\n"
-		."    <field name=\"altgroup\" type=\"radio\"\n"
-		."    label=\"who are you?\"\n"
-		."    required=\"true\">\n"
-		."$grpoptions"
-		."    </field>\n"
-		."  </fieldset>\n"
+	    /* Append "altgroup.groupname" field to "default" fieldset
+	     * so that it would be rendered in the same "block" as
+	     * core user fields like "username/email/password": */
+	    $form->load("<form>"
+		."  <fields name='altgroup'>"
+		."    <fieldset name='default'>"
+		."      <field name='groupname' type='radio'"
+		."          label='Who are you?'"
+		."          required='true'>"
+		.         $grpoptions
+		."      </field>"
+		."    </fieldset>"
+		."  </fields>"
 		."</form>");
-	    /*
-	    $form->setFieldAttribute('email2', 'label',
-		'groups');
-	    $form->setFieldAttribute('email2', 'default',
-		$this->params->get('altgroups'));
-	    $form->setFieldAttribute('email2', 'description',
-		"one of ".$this->params->get('altgroups'));
-	    $form->setFieldAttribute('email2', 'required',
-		'false');*/
+	    /* JLog::add("input=".self::_str(
+		$form->getInput("groupname", "altgroup")));
+	    JLog::add("form=".self::_str($form));*/
 	} elseif ($form_name == 'com_users.profile') {
 	    $form->removeField("email2");
 	};
