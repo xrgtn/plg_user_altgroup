@@ -3,7 +3,7 @@
 	<name>User - Alternative registration group</name>
 	<author>xrgtn</author>
 	<license>Simplified BSD License</license>
-	<version>0.2.3</version>
+	<version>0.2.4</version>
 	<description>
 		Allows user to select a group during registration
 	</description>
