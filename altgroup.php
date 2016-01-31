@@ -50,9 +50,15 @@ class PlgUserAltgroup extends JPlugin {
 
     private static function _str($obj) {
 	$s = htmlentities(print_r($obj, 1));
-	$s = nl2br($s);
-	$s = str_replace(" ", "&nbsp;", $s);
-	return "<code>$s</code>";
+	$ret = "";
+	foreach (explode("\n", $s) as $l) {
+	    if (preg_match('/^( +)(.*)$/', $l, $g)) {
+		$l = str_replace(" ", "&nbsp;", $g[1]).$g[2];
+	    };
+	    $ret .= ($ret == "") ? "" : "<br>";
+	    $ret .= $l;
+	};
+	return "<tt>$ret</tt>";
     }
 
     /**
@@ -95,7 +101,7 @@ class PlgUserAltgroup extends JPlugin {
 	    JLog::add("e2input=".self::_str(
 		$form->getInput("email2")));
 	    JLog::add("e2label=".self::_str(
-		$form->getLabel("email2","")));
+		$form->getLabel("email2", "")));
 	    JLog::add("form=".self::_str($form));
 	    $form->removeField("email2");
 	    $grpoptions = "";
