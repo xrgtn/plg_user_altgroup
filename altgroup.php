@@ -97,7 +97,7 @@ class PlgUserAltgroup extends JPlugin {
 	    JLog::add("e2label=".self::_str(
 		$form->getLabel("email2","")));
 	    JLog::add("form=".self::_str($form));
-	    $form->removeField("email2", "default");
+	    $form->removeField("email2");
 	    $grpoptions = "";
 	    foreach (explode(",", $this->params->get('altgroups'))
 	    as $grp) {
@@ -123,6 +123,8 @@ class PlgUserAltgroup extends JPlugin {
 		"one of ".$this->params->get('altgroups'));
 	    $form->setFieldAttribute('email2', 'required',
 		'false');*/
+	} elseif ($form_name == 'com_users.profile') {
+	    $form->removeField("email2");
 	};
 
 	return true;
