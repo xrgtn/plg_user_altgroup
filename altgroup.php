@@ -48,6 +48,13 @@ class PlgUserAltgroup extends JPlugin {
 	return true;
     }
 
+    private static function _str($obj) {
+	$s = htmlentities(print_r($obj, 1));
+	$s = nl2br($s);
+	$s = str_replace(" ", "&nbsp;", $s);
+	return "<code>$s</code>";
+    }
+
     /**
      * Adds additional fields to the user editing form
      *
@@ -81,14 +88,33 @@ class PlgUserAltgroup extends JPlugin {
 
 	if ($app->isSite()
 	&& $form_name == 'com_users.registration') {
-	    JLog::add("fieldsets=".print_r(htmlentities(
-		$form->getFieldsets()), 1));
-	    JLog::add("form control=".print_r(htmlentities(
-		$form->getFormControl()), 1));
-	    JLog::add("e2input=".print_r(htmlentities(
-		$form->getInput("email2")), 1));
-	    JLog::add("e2label=".print_r(htmlentities(
-		$form->getLabel("email2")), 1));
+	    JLog::add("fieldsets=".self::_str(
+		$form->getFieldsets()));
+	    JLog::add("form control=".self::_str(
+		$form->getFormControl()));
+	    JLog::add("e2input=".self::_str(
+		$form->getInput("email2")));
+	    JLog::add("e2label=".self::_str(
+		$form->getLabel("email2","")));
+	    JLog::add("form=".self::_str($form));
+	    $form->removeField("email2", "default");
+	    $grpoptions = "";
+	    foreach (explode(",", $this->params->get('altgroups'))
+	    as $grp) {
+		$grp = htmlentities(trim($grp));
+	        $grpoptions .= "      <option value=\"$grp\">I'm\n"
+		    ."      $grp</option>\n";
+	    };
+	    $form->load("<form>\n"
+		."  <fieldset name=\"altgroups\">\n"
+		."    <field name=\"altgroup\" type=\"radio\"\n"
+		."    label=\"who are you?\"\n"
+		."    required=\"true\">\n"
+		."$grpoptions"
+		."    </field>\n"
+		."  </fieldset>\n"
+		."</form>");
+	    /*
 	    $form->setFieldAttribute('email2', 'label',
 		'groups');
 	    $form->setFieldAttribute('email2', 'default',
@@ -96,7 +122,7 @@ class PlgUserAltgroup extends JPlugin {
 	    $form->setFieldAttribute('email2', 'description',
 		"one of ".$this->params->get('altgroups'));
 	    $form->setFieldAttribute('email2', 'required',
-		'false');
+		'false');*/
 	};
 
 	return true;
