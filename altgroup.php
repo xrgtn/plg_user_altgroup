@@ -118,6 +118,145 @@ class PlgUserAltgroup extends JPlugin {
 
 	return true;
     }
+
+    /**
+     * Find group by its title.
+     *
+     * @param   string  $title  Group title.
+     * @return  array           List of group (id, title) pairs.
+     */
+    public static function findGroup($title) {
+	$db = JFactory::getDbo();
+	$db->setQuery("select id,title from #__usergroups"
+	    ." where title=".$db->quote($title)
+	    ." order by id");
+	return $db->loadRowList();
+    }
+
+    /**
+     * Logs the supplied message as warning.
+     *
+     * @param   string  $message  Warning text.
+     *
+     * @return  void
+     */
+    protected function _warn($message) {
+	JLog::add(htmlentities($message), JLog::WARNING);
+    }
+
+    /**
+     * Logs the supplied message as warning and sets it as an
+     * error on the observed subject.
+     *
+     * @param   string  $message  Error message text.
+     *
+     * @return  void
+     */
+    protected function _err($message) {
+	$this->_warn($message);
+	$this->_subject->setError($message);
+    }
+
+    /**
+     * Method is called before user data is stored in the database.
+     * Altgroup plugin verifies that the chosen group is valid
+     * and exists in the database.
+     *
+     * @param	array	$user	Holds the old user data.
+     * @param	boolean	$isnew	True if a new user is stored.
+     * @param	array	$data	Holds the new user data.
+     *
+     * @return	boolean
+     */
+    public function onUserBeforeSave($user, $isnew, $data) {
+	$app = JFactory::getApplication();
+
+	// Check that the "altgroup.groupname" is valid:
+	if (!empty($data['altgroup']['groupname'])) {
+	    $group_name = $data['altgroup']['groupname'];
+	    $permitted = false;
+	    foreach (explode(",", $this->params->get('altgroups'))
+		    as $g) {
+		if ($group_name == trim($g)) {
+		    $permitted = true;
+		    break;
+		};
+	    };
+	    if (!$permitted) {
+		$this->_err("Altgroup '$group_name' not permitted");
+		return false;
+	    };
+	} elseif ($isnew and $app->isSite()) {
+	    $this->_err("Empty altgroup name field");
+	    return false;
+	} else {
+	    return true;
+	};
+
+	if ($isnew) {
+	    // verify altgroup.groupname against the DB and reset
+	    // $data['groups'] array to altgroup's group_id:
+	    try {
+		$groups = self::findGroup($group_name);
+	    } catch (RuntimeException $e) {
+		$this->_err("DB error: ".$e->getMessage());
+		return false;
+	    };
+	    if (count($groups) > 1) {
+		// XXX: when multiple groups match the name,
+		// we take the one with the smallest id.
+		$ids = array();
+		foreach ($groups as $g) {$ids[] = $g[0];};
+		$this->warn("Multiple groups named '$group_name'"
+		    ." found: ".implode(", ", $ids));
+	    } elseif (count($groups) == 0) {
+		$this->_err("No group named '$group_name'"
+		    ." found in DB");
+		return false;
+	    };
+	};
+    }
+
+    /**
+     * Called after user data has been saved. Because the data
+     * passed to the earlier onUserBeforeSave() call are copies
+     * and modifications to them won't affect JUser and JUserTable
+     * objects, we alter primary user's group in onUserAfterSave().
+     *
+     * @param   array    $data    entered user data
+     * @param   boolean  $isNew   true if this is a new user
+     * @param   boolean  $ok      true if saving the user worked
+     * @param   string   $error   error message
+     *
+     * @return  bool
+     */
+    public function onUserAfterSave($data, $isNew, $ok, $error) {
+	// Only "fix" primary group for successfully saved new users:
+	if ($isNew && $ok && isset($data['altgroup']['groupname'])) {
+	    $u = (int)JArrayHelper::getValue($data, 'id', 0, 'int');
+	    $group_name = $data['altgroup']['groupname'];
+	    try {
+		$groups = self::findGroup($group_name);
+		if (count($groups) < 1) {
+		    $this->_err("No group named '$group_name'"
+			." found in DB");
+		    return false;
+		};
+		$g = (int)$groups[0][0];
+		$db = JFactory::getDbo();
+		$db->setQuery("delete from #__user_usergroup_map"
+		    ." where user_id=$u");
+		$db->execute();
+		$db->setQuery("insert into #__user_usergroup_map"
+		    ."(user_id, group_id) values ($u, $g)");
+		$db->execute();
+	    } catch (RuntimeException $e) {
+		$this->_err("DB error: ".$e->getMessage());
+		return false;
+	    };
+	};
+	return true;
+    }
 };
 /* vi: set sw=4 noet ts=8 tw=71: */
 ?>
