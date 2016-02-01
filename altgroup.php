@@ -20,28 +20,30 @@ class PlgUserAltgroup extends JPlugin {
 	    return true;
 	};
 
+	//JLog::add("onContentPrepareData ".htmlentities($context));
+
 	if (is_object($data)) {
-	    $userId = isset($data->id) ? $data->id : 0;
-	    if (!isset($data->altgroups) and $userId > 0) {
+	    $user_id = isset($data->id) ? $data->id : 0;
+	    if (!isset($data->altgroup) and $user_id > 0) {
 		// Load the profile data from the database.
 		$db = JFactory::getDbo();
 		$db->setQuery("select ugm.group_id, g.title "
 		    ." from #__user_usergroup_map ugm,"
 		    ." #__usergroups g"
-		    ." where ugm.user_id=".(int)$userId
-		    ." and g.group_id=ugm.group_id");
+		    ." where ugm.user_id=".(int)$user_id
+		    ." and g.id=ugm.group_id");
 		try {
 		    $rows = $db->loadRowList();
 		} catch (RuntimeException $e) {
-		    $this->_subject->setError($e->getMessage());
+		    $this->_err($e->getMessage());
 		    return false;
 		};
 		// Merge the profile data.
-		$data->altgroups = array();
+		$data->altgroup['groupmap'] = array();
 		foreach ($rows as $r) {
-		    JLog::add(htmlentities("user $userId,"
-			." group $r[0] - $r[1]"));
-		    $data->altgroups[$r[0]] = $r[1];
+		    /*JLog::add(htmlentities("$context: user $user_id,"
+			." group $r[0] - $r[1]"));*/
+		    $data->altgroup['groupmap'][$r[0]] = $r[1];
 		};
 	    };
 	};
@@ -82,6 +84,8 @@ class PlgUserAltgroup extends JPlugin {
 		'com_users.profile', 'com_users.registration'))) {
 	    return true;
 	};
+
+	//JLog::add("onContentPrepareForm ".htmlentities($form_name));
 
 	$app = JFactory::getApplication();
 
