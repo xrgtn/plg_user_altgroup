@@ -22,29 +22,27 @@ class PlgUserAltgroup extends JPlugin {
 
 	//JLog::add("onContentPrepareData ".htmlentities($context));
 
-	if (is_object($data)) {
-	    $user_id = isset($data->id) ? $data->id : 0;
-	    if (!isset($data->altgroup) and $user_id > 0) {
-		// Load the profile data from the database.
-		$db = JFactory::getDbo();
-		$db->setQuery("select ugm.group_id, g.title "
-		    ." from #__user_usergroup_map ugm,"
-		    ." #__usergroups g"
-		    ." where ugm.user_id=".(int)$user_id
-		    ." and g.id=ugm.group_id");
-		try {
-		    $rows = $db->loadRowList();
-		} catch (RuntimeException $e) {
-		    $this->_err($e->getMessage());
-		    return false;
-		};
-		// Merge the profile data.
-		$data->altgroup['groupmap'] = array();
-		foreach ($rows as $r) {
-		    /*JLog::add(htmlentities("$context: user $user_id,"
-			." group $r[0] - $r[1]"));*/
-		    $data->altgroup['groupmap'][$r[0]] = $r[1];
-		};
+	if (is_object($data) and isset($data->id) and $data->id > 0
+		and $context == 'com_users.profile'
+		and !isset($data->altgroup)) {
+	    // Load list of user's groups from the DB:
+	    $db = JFactory::getDbo();
+	    $db->setQuery("select ugm.group_id, g.title "
+		." from #__user_usergroup_map ugm,"
+		." #__usergroups g"
+		." where ugm.user_id=".(int)$data->id
+		." and g.id=ugm.group_id");
+	    try {
+		$rows = $db->loadRowList();
+	    } catch (RuntimeException $e) {
+		$this->_err($e->getMessage());
+		return false;
+	    };
+	    $data->altgroup['groups'] = array();
+	    foreach ($rows as $r) {
+		$data->altgroup['groups'][] = array($r[0], $r[1]);
+		/*JLog::add(htmlentities("$context: user ".$data->_id
+		    .", group $r[0] - $r[1]"));*/
 	    };
 	};
 	return true;
@@ -102,22 +100,42 @@ class PlgUserAltgroup extends JPlugin {
 	    /* Append "altgroup.groupname" field to "default" fieldset
 	     * so that it would be rendered in the same "block" as
 	     * core user fields like "username/email/password": */
-	    $form->load("<form>"
-		."  <fields name='altgroup'>"
-		."    <fieldset name='default'>"
-		."      <field name='groupname' type='radio'"
-		."          label='Who are you?'"
-		."          required='true'>"
+	    $form->load('<form>'
+		.'  <fields name="altgroup">'
+		.'    <fieldset name="default">'
+		.'      <field name="groupname" type="radio"'
+		.'          label="Who are you?"'
+		.'          required="true">'
 		.         $grpoptions
-		."      </field>"
-		."    </fieldset>"
-		."  </fields>"
-		."</form>");
+		.'      </field>'
+		.'    </fieldset>'
+		.'  </fields>'
+		.'</form>');
 	    /* JLog::add("input=".self::_str(
 		$form->getInput("groupname", "altgroup")));
 	    JLog::add("form=".self::_str($form));*/
 	} elseif ($form_name == 'com_users.profile') {
 	    $form->removeField("email2");
+	    $group_names = array();
+	    if (isset($data->altgroup['groups'])) {
+		foreach ($data->altgroup['groups'] as $g) {
+		    $group_names[] = $g[1];
+		};
+	    };
+	    /* Append "altgroup.groupnames" field to "core"
+	     * fieldset: */
+	    $form->load('<form>'
+		.'  <fields name="altgroup">'
+		.'    <fieldset name="core">'
+		.'      <field name="groupnames" type="text"'
+		.'          disabled="true"'
+		.'          label="You are:"'
+		.'          default="'.(htmlentities(implode(
+		    ",", $group_names))).'"'
+		.'      />'
+		.'    </fieldset>'
+		.'  </fields>'
+		.'</form>');
 	};
 
 	return true;
