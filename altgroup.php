@@ -89,13 +89,15 @@ class PlgUserAltgroup extends JPlugin {
 
 	if ($app->isSite()
 		&& $form_name == 'com_users.registration') {
+	    $lang = JFactory::getLanguage()->getTag();
 	    $form->removeField("email2");
 	    $grpoptions = "";
 	    foreach (explode(",", $this->params->get('altgroups'))
 		    as $grp) {
 		$grp = htmlentities(trim($grp));
 	        $grpoptions .= "        <option value=\"$grp\">"
-		    ."I'm $grp</option>\n";
+		    .($lang == "ru-RU" ? "Я -" : "I'm")
+		    ." $grp</option>\n";
 	    };
 	    /* Append "altgroup.groupname" field to "default" fieldset
 	     * so that it would be rendered in the same "block" as
@@ -104,7 +106,8 @@ class PlgUserAltgroup extends JPlugin {
 		.'  <fields name="altgroup">'
 		.'    <fieldset name="default">'
 		.'      <field name="groupname" type="radio"'
-		.'          label="Who are you?"'
+		.'          label='.($lang == "ru-RU" ?
+		    '"Кто вы?"' : '"Who are you?"')
 		.'          required="true">'
 		.         $grpoptions
 		.'      </field>'
