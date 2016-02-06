@@ -14,7 +14,7 @@
 		<fields name="params">
 			<fieldset name="basic">
 				<field name="altgroups" type="text"
-					default="Realtor, Owner"
+					default="Author, Manager"
 					label="Permitted alternative groups"
 					size="16"
 				/>
