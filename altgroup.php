@@ -118,6 +118,7 @@ class PlgUserAltgroup extends JPlugin {
 		$form->getInput("groupname", "altgroup")));
 	    JLog::add("form=".self::_str($form));*/
 	} elseif ($form_name == 'com_users.profile') {
+	    $lang = JFactory::getLanguage()->getTag();
 	    $form->removeField("email2");
 	    $group_names = array();
 	    if (isset($data->altgroup['groups'])) {
