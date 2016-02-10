@@ -136,7 +136,7 @@ class PlgUserAltgroup extends JPlugin {
 		.'          label='.($lang == "ru-RU" ?
 		    '"Вы:"' : '"You are:"')
 		.'          default="'.(htmlentities(implode(
-		    ",", $group_names))).'"'
+		    ", ", $group_names))).'"'
 		.'      />'
 		.'    </fieldset>'
 		.'  </fields>'
